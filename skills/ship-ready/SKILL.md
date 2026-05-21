@@ -2,15 +2,15 @@
 name: ship-ready
 description: >-
   Top-level orchestrator: runs `audit-all` end-to-end, then
-  `hygiene-all` end-to-end, prints ONE combined Tier-1 + Tier-2
-  report, then asks the user (in chat) "All checks pass. Hand off to
+  `hygiene-all` end-to-end, prints ONE combined report, then asks
+  the user (in chat) "All checks pass. Hand off to
   review-and-ship-to-staging now? (yes / no)". On yes, invokes
-  `review-and-ship-to-staging` to land ALL the auto-fixes as a single
-  PR titled `chore: ship-ready autofixes (<summary>)`. This is the
-  ONLY interactive prompt in the entire skill system — every other
-  skill is fully autonomous. Use when the user says "ship ready",
-  "full ship-ready check", "audit and hygiene then ship", or
-  "get this ready to ship".
+  `review-and-ship-to-staging` to land ALL the auto-fixes as a
+  single PR titled `chore: ship-ready autofixes (<summary>)`. This
+  is the ONLY interactive prompt in the entire skill system — every
+  other skill is fully autonomous. Use when the user says "ship
+  ready", "full ship-ready check", "audit and hygiene then ship",
+  or "get this ready to ship".
 ---
 
 # Ship Ready (top-level orchestrator)
@@ -23,9 +23,10 @@ exact moment the working tree becomes a remote-affecting action.
 ## When to use this skill
 
 - "I'm shipping a non-trivial change to production this hour."
-- Before any release that touches auth, billing, or admin.
-- When you'd otherwise run `audit-all` + `hygiene-all` + `review-and-ship-to-staging`
-  back to back manually.
+- Before any release that touches auth, billing, or other sensitive
+  surfaces.
+- When you'd otherwise run `audit-all` + `hygiene-all` +
+  `review-and-ship-to-staging` back to back manually.
 
 ## When NOT to use this skill
 
@@ -42,7 +43,7 @@ Task progress:
 - [ ] Step 1: invoke audit-all end-to-end
 - [ ] If audit-all hard-stops, ship-ready stops too
 - [ ] Step 2: invoke hygiene-all end-to-end
-- [ ] Step 3: build the combined Tier-1 + Tier-2 aggregated report
+- [ ] Step 3: build the combined audits + hygiene aggregated report
 - [ ] Step 4: print the report
 - [ ] Step 5: ASK THE USER in chat — "Hand off to review-and-ship-to-staging? (yes / no)"
 - [ ] If yes: invoke review-and-ship-to-staging with a chore: ship-ready autofixes PR
@@ -51,18 +52,16 @@ Task progress:
 
 ### Step 1. `audit-all`
 
-Read `[.cursor/skills/audit-all/SKILL.md](.cursor/skills/audit-all/SKILL.md)`
-and execute its full workflow. If `audit-all` reports a HARD-STOP,
-THIS orchestrator stops too — print the audit-all report verbatim,
-do NOT proceed to hygiene-all, do NOT ask the ship-confirmation
-question. Reason: the project isn't ready to ship until the
-hard-stop is resolved.
+Read `skills/audit-all/SKILL.md` and execute its full workflow. If
+`audit-all` reports a HARD-STOP, THIS orchestrator stops too — print
+the audit-all report verbatim, do NOT proceed to hygiene-all, do NOT
+ask the ship-confirmation question. Reason: the project isn't ready
+to ship until the hard-stop is resolved.
 
 ### Step 2. `hygiene-all`
 
-Read `[.cursor/skills/hygiene-all/SKILL.md](.cursor/skills/hygiene-all/SKILL.md)`
-and execute its full workflow. Soft-fail by design — always
-completes.
+Read `skills/hygiene-all/SKILL.md` and execute its full workflow.
+Soft-fail by design — always completes.
 
 ### Step 3. Combined aggregated report
 
@@ -77,12 +76,12 @@ Pre-flight
 - Working tree at start:  clean | dirty
 
 =================================================================
-Tier 1 — pre-ship audits   (from audit-all)
+Audits   (from audit-all)
 =================================================================
 <full audit-all output here>
 
 =================================================================
-Tier 2 — repo hygiene      (from hygiene-all)
+Hygiene  (from hygiene-all)
 =================================================================
 <full hygiene-all output here>
 
@@ -90,8 +89,8 @@ Tier 2 — repo hygiene      (from hygiene-all)
 Combined deltas
 =================================================================
 - Files modified by this run:    <N>
-  - by Tier 1 audits:            <list>
-  - by Tier 2 hygiene:           <list>
+  - by audits:                   <list>
+  - by hygiene:                  <list>
   - overlap (touched by both):   <list>
 
 Overall outcome:
@@ -144,8 +143,8 @@ to ship without clear consent is always the safer choice).
 
 ### Step 6. Invoke `review-and-ship-to-staging`
 
-Read `[.cursor/skills/review-and-ship-to-staging/SKILL.md](.cursor/skills/review-and-ship-to-staging/SKILL.md)`
-and execute its workflow with two adjustments:
+Read `skills/review-and-ship-to-staging/SKILL.md` and execute its
+workflow with two adjustments:
 
 1. **Scope the file list** via `git diff --name-only <pre-flight-sha>
    HEAD` instead of building it from the chat's edited files. The
@@ -184,7 +183,6 @@ Next step (optional):
   - Run `promote-staging-to-main` to ship staging → production.
   - Then `release-tag` to label the release.
   - Then `release-notes-gen` to publish the GitHub Release page.
-  - Then `staging-smoke-test` against production to verify.
 ```
 
 ## Hard Rules (never break)

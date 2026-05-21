@@ -48,8 +48,9 @@ chat. Pre-existing issues in untouched files are out of scope.
      (`tracker._lock` etc.) — never read-modify-write outside it. Frontend
      state must be per-component / per-message, never on a module singleton.
 5. **Architecture**: changes must be additive and follow existing patterns
-   (PocketFlow node lifecycle on the backend, hook + sticky-prop patterns on
-   the frontend, `.cursor/rules/frontend.mdc` design tokens for UI).
+   already in the codebase. If the project has design-system rules or
+   architectural conventions documented elsewhere (e.g. an AGENTS.md, a
+   rules file, or a design system doc), honor them.
 6. **Lint**: run `ReadLints` on every modified file; fix every error the
    agent introduced. Pre-existing lints in untouched files are out of scope.
 

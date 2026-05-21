@@ -32,7 +32,7 @@ anywhere.
 ## Relationship to `review-and-ship-to-staging`
 
 This skill IS the first half of
-`[.cursor/skills/review-and-ship-to-staging/SKILL.md](.cursor/skills/review-and-ship-to-staging/SKILL.md)`
+[`review-and-ship-to-staging`](../review-and-ship-to-staging/SKILL.md)
 — specifically steps 1, 4, 5, 6 from that skill's workflow. If the
 user later runs `review-and-ship-to-staging` on the same chat:
 

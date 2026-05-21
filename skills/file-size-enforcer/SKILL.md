@@ -2,9 +2,9 @@
 name: file-size-enforcer
 description: >-
   Walk every source file in the repo (Python, TypeScript, TSX) and
-  enforce the 700-line cap from
-  `[.cursor/skills/review-and-ship-to-staging/SKILL.md](.cursor/skills/review-and-ship-to-staging/SKILL.md)`
-  lines 24-27. For each violator, propose a concrete split plan
+  enforce the 700-line cap from the
+  [`review-and-ship-to-staging`](../review-and-ship-to-staging/SKILL.md)
+  review phase. For each violator, propose a concrete split plan
   (which functions / components / route handlers belong in which new
   file). Auto-apply the split for files <= 1000 lines; files over 1000
   get a human-review TODO with the proposed split written into the

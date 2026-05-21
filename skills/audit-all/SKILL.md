@@ -1,18 +1,17 @@
 ---
 name: audit-all
 description: >-
-  Orchestrator that runs every Tier 1 pre-ship audit-and-fix skill in
-  a deliberate order: `secret-scan` → `dependency-audit` →
-  `auth-flow-audit` → `security-audit` → `concurrency-audit` →
-  `migration-safety` → `performance-audit`. Aggregates each child's
-  output into ONE combined report. Hard-stops on a CRITICAL secret
-  leak OR an unresolved CRITICAL auth finding; everything else is
-  soft-fail and the run continues. Use when the user says "audit
-  all", "run all audits", "full pre-ship audit", or "audit
-  everything before I ship".
+  Orchestrator that runs every pre-ship audit-and-fix skill in a
+  deliberate order: `secret-scan` → `dependency-audit` →
+  `security-audit`. Aggregates each child's output into ONE combined
+  report. Hard-stops on a CRITICAL secret leak OR any unresolved
+  CRITICAL security finding; lesser findings are soft-fail and the
+  run continues. Use when the user says "audit all", "run all
+  audits", "full pre-ship audit", or "audit everything before I
+  ship".
 ---
 
-# Audit All (Tier 1 orchestrator)
+# Audit All (orchestrator)
 
 One prompt, every pre-ship audit, one combined report. This skill
 does NOT re-implement any audit logic — it literally reads the child
@@ -24,20 +23,16 @@ this orchestrator with zero duplication.
 
 - Daily, before leaving your desk on a chat that touched code.
 - Always before promoting `staging` → `main`.
-- Anytime the user is suspicious about a chat's blast radius.
+- Anytime you're suspicious about a chat's blast radius.
 
 ## Workflow
 
 ```
 Task progress:
 - [ ] Pre-flight: snapshot current HEAD SHA + working-tree state for the aggregated diff
-- [ ] Step 1: secret-scan                — hard-stop checkpoint
+- [ ] Step 1: secret-scan         — hard-stop checkpoint
 - [ ] Step 2: dependency-audit
-- [ ] Step 3: auth-flow-audit            — hard-stop checkpoint
-- [ ] Step 4: security-audit
-- [ ] Step 5: concurrency-audit
-- [ ] Step 6: migration-safety           — skipped if no Alembic changes
-- [ ] Step 7: performance-audit          — always soft-fail
+- [ ] Step 3: security-audit      — hard-stop checkpoint
 - [ ] Build the aggregated report
 - [ ] Print the report + final hand-off line
 ```
@@ -49,29 +44,19 @@ Task progress:
    edits land in the working tree. Also the cheapest skill in the
    chain, so we fail fast if there's a leak.
 2. **`dependency-audit` second** — version bumps happen before the
-   auto-fixes for security / perf / concurrency land, so those fixes
-   apply on the upgraded codebase. (A perf-audit fix that wraps an
-   LLM call in `asyncio.wait_for` is wasted if the next bump rewrites
-   the LLM SDK shape.)
-3. **`auth-flow-audit` third** — highest blast radius. If something
-   here is CRITICAL the run stops — there is no point auditing CORS
-   or N+1 queries on a codebase with an unguarded route.
-4. **`security-audit` fourth** — covers everything `auth-flow-audit`
-   does not (SQL injection, CORS, file uploads, dangerous builtins).
-5. **`concurrency-audit` fifth** — formalizes the rules already in
-   `[.cursor/skills/review-and-ship-to-staging/SKILL.md](.cursor/skills/review-and-ship-to-staging/SKILL.md)`.
-6. **`migration-safety` sixth** — cheap: self-skips if no Alembic
-   migrations changed in the working tree.
-7. **`performance-audit` last** — soft-fail, mostly informational.
-   Always runs because perf findings inform whether the user wants
-   to ship now or batch up improvements.
+   auto-fixes for security land, so those fixes apply on the upgraded
+   codebase.
+3. **`security-audit` third** — SQL injection, CORS, schema
+   validation, file uploads, dangerous builtins. Runs last because
+   its auto-fixes are the most invasive and benefit from a clean
+   secret + dependency baseline.
 
 ### Execution model
 
 For each step:
 
-1. Read the corresponding `.cursor/skills/<name>/SKILL.md` and
-   execute its workflow exactly as written.
+1. Read the corresponding `skills/<name>/SKILL.md` and execute its
+   workflow exactly as written.
 2. Capture the "Output Template" block that the child prints at the
    end. That block becomes one section of the aggregated report.
 3. Track files modified by that step (via `git diff --name-only`
@@ -86,11 +71,7 @@ For each step:
 |------|-------------------|-------------|
 | `secret-scan` | A real leak (post-filter) is detected and not auto-extracted | Otherwise |
 | `dependency-audit` | Resolution dry-run fails (`pip install --dry-run` / `npm install --dry-run`) | Otherwise |
-| `auth-flow-audit` | Any unresolved CRITICAL finding | Otherwise |
 | `security-audit` | Any unresolved CRITICAL finding | Otherwise |
-| `concurrency-audit` | Any unresolved CRITICAL finding | Otherwise |
-| `migration-safety` | Any unresolved CRITICAL finding | Otherwise |
-| `performance-audit` | NEVER hard-stops (soft-fail by design) | Always |
 
 When a hard-stop fires, the orchestrator:
 
@@ -110,17 +91,12 @@ Pre-flight
 
 Step 1 — secret-scan          : pass | HARD-STOP (<reason>)
 Step 2 — dependency-audit     : pass | <N CVEs auto-bumped, K manual> | HARD-STOP
-Step 3 — auth-flow-audit      : pass | HARD-STOP (<reason>) | <N critical unresolved>
-Step 4 — security-audit       : pass | <N findings>
-Step 5 — concurrency-audit    : pass | <N findings>
-Step 6 — migration-safety     : pass | skipped (no Alembic changes)
-Step 7 — performance-audit    : <N findings>  (always soft-fail)
+Step 3 — security-audit       : pass | HARD-STOP (<reason>) | <N findings>
 
 Files modified by this run    : <N>
   - by secret-scan:           <list>
   - by dependency-audit:      <list>
-  - by auth-flow-audit:       <list>
-  - ...
+  - by security-audit:        <list>
 
 CRITICAL findings still requiring human review
   • <step>  <file>:<line>  <finding>
@@ -139,9 +115,9 @@ Next step:
 - **Never reorder the sequence.** Each step depends on the previous
   one having landed its auto-fixes (e.g. dependency-audit's bumps
   must precede security-audit's auto-fixes).
-- **Never skip a step** unless the step's own SKILL.md says it can
-  self-skip (only `migration-safety` does, when no Alembic changes
-  are present).
+- **Never skip a step.** If a step is irrelevant for the current
+  repo (e.g. no `requirements.txt`), the child skill self-skips and
+  reports — the orchestrator never decides for it.
 - **Never re-implement child logic.** If a child skill is incorrect,
   fix the child SKILL.md; do not patch behavior inside this file.
 - **Never push, commit, or PR.** Modifies the working tree only.

@@ -1,7 +1,7 @@
 ---
 name: hygiene-all
 description: >-
-  Orchestrator that runs every Tier 2 repo-hygiene skill in order:
+  Orchestrator that runs every repo-hygiene skill in order:
   `dead-code-sweep` → `lint-and-typecheck-fix` → `file-size-enforcer`.
   Aggregates each child's output into ONE combined report. The order
   matters: dead code is removed before line counts are taken;
@@ -12,7 +12,7 @@ description: >-
   all", "full repo hygiene pass", or "clean up the repo".
 ---
 
-# Hygiene All (Tier 2 orchestrator)
+# Hygiene All (orchestrator)
 
 The Friday-cleanup orchestrator. Daily lint / format work, plus the
 periodic file-size pass, in one prompt.
@@ -113,7 +113,7 @@ Files modified by this run              : <N>
 Next step:
   - Review the mypy / tsc residue from Step 2 (those can't be auto-fixed).
   - Run `review-and-ship-to-staging` to land the hygiene diff, OR
-  - Run `audit-all` first if you also want a security/auth pass before shipping.
+  - Run `audit-all` first if you also want a security pass before shipping.
   - Or run `ship-ready` to do audit + ship in one shot.
 ```
 

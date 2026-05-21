@@ -52,13 +52,14 @@ Before any bump, capture the current pinned set so the user can roll
 back if a bump turns out to break something:
 
 ```bash
-cp requirements.txt .cursor/cache/requirements.txt.before
-cp frontend/package.json .cursor/cache/package.json.before
-cp frontend/package-lock.json .cursor/cache/package-lock.json.before
+mkdir -p .skills-cache/$(date +%s)
+cp requirements.txt .skills-cache/$(date +%s)/requirements.txt.before
+cp frontend/package.json .skills-cache/$(date +%s)/package.json.before
+cp frontend/package-lock.json .skills-cache/$(date +%s)/package-lock.json.before
 ```
 
-(Use a per-run timestamped subfolder under `.cursor/cache/` so prior
-snapshots aren't clobbered.)
+(Use a per-run timestamped subfolder under `.skills-cache/` so prior
+snapshots aren't clobbered. Add `.skills-cache/` to `.gitignore`.)
 
 ### Step 3. pip-audit
 
@@ -137,9 +138,9 @@ paste back if needed:
 
 ```
 # To roll back this batch:
-cp .cursor/cache/<timestamp>/requirements.txt.before requirements.txt
-cp .cursor/cache/<timestamp>/package.json.before frontend/package.json
-cp .cursor/cache/<timestamp>/package-lock.json.before frontend/package-lock.json
+cp .skills-cache/<timestamp>/requirements.txt.before requirements.txt
+cp .skills-cache/<timestamp>/package.json.before frontend/package.json
+cp .skills-cache/<timestamp>/package-lock.json.before frontend/package-lock.json
 cd frontend && npm install --no-audit
 ```
 
@@ -199,9 +200,9 @@ Manual-review queue
   • <package>  <current>  →  recommended <fix-ver>  (reason: major-version bump on KNOWN_BREAKING_PACKAGE / no clean fix)
 
 Rollback
-  cp .cursor/cache/<timestamp>/requirements.txt.before requirements.txt
-  cp .cursor/cache/<timestamp>/package.json.before frontend/package.json
-  cp .cursor/cache/<timestamp>/package-lock.json.before frontend/package-lock.json
+  cp .skills-cache/<timestamp>/requirements.txt.before requirements.txt
+  cp .skills-cache/<timestamp>/package.json.before frontend/package.json
+  cp .skills-cache/<timestamp>/package-lock.json.before frontend/package-lock.json
   (cd frontend && npm install --no-audit)
 
 Next step: review the manual queue, then run `review-and-ship-to-staging`.

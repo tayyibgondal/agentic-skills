@@ -211,5 +211,5 @@ GitHub Release:              created | refreshed
 Release URL:                 <url>
 PAT fallback used:           yes | no
 
-Next step (optional): run `staging-smoke-test` to verify the production deploy is healthy.
+Next step (optional): verify the production deploy is healthy with your own smoke test, then close any tracked release tickets.
 ```

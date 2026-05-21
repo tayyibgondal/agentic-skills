@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Skills — a curated, tool-agnostic library for coding agents</title>
+  <meta name="description" content="High-leverage skills for Cursor, Claude Code, and any agentic tool: audit, hygiene, ship, release, rollback." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-subtle: #fafafa;
+      --bg-elevated: #ffffff;
+      --border: #e5e5e5;
+      --border-strong: #d4d4d4;
+      --text: #171717;
+      --text-secondary: #525252;
+      --text-muted: #737373;
+      --accent: #7d52f4;
+      --accent-soft: #f4eeff;
+      --code-bg: #f4f4f5;
+      --green: #1daf61;
+      --green-soft: #e6f6ee;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+      --shadow-md: 0 4px 14px -2px rgb(0 0 0 / 0.06);
+      --max-w: 1080px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --bg-subtle: #111111;
+        --bg-elevated: #161616;
+        --border: #262626;
+        --border-strong: #383838;
+        --text: #fafafa;
+        --text-secondary: #a3a3a3;
+        --text-muted: #737373;
+        --accent: #a78bfa;
+        --accent-soft: #1c1330;
+        --code-bg: #161616;
+        --green: #34d399;
+        --green-soft: #0d2218;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .wrap {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: saturate(180%) blur(12px);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--text);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .nav-links {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--bg) !important;
+      font-weight: 500;
+      font-size: 13px;
+      transition: opacity 0.15s;
+    }
+    .nav-cta:hover { opacity: 0.85; color: var(--bg) !important; }
+
+    @media (max-width: 640px) {
+      .nav-links a:not(.nav-cta) { display: none; }
+    }
+
+    /* Hero */
+    header.hero {
+      padding: 96px 0 64px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    h1 {
+      font-size: clamp(36px, 6vw, 60px);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      margin: 0 0 20px;
+      font-weight: 600;
+    }
+    h1 .accent {
+      background: linear-gradient(135deg, var(--accent) 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .lede {
+      font-size: clamp(16px, 2vw, 19px);
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin: 0 auto 36px;
+      line-height: 1.55;
+    }
+    .hero-actions {
+      display: inline-flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .btn-secondary:hover { background: var(--bg-subtle); }
+    .btn svg { width: 14px; height: 14px; }
+
+    /* Section */
+    section {
+      padding: 72px 0;
+      border-top: 1px solid var(--border);
+    }
+    .section-head {
+      max-width: 640px;
+      margin: 0 auto 48px;
+      text-align: center;
+    }
+    .section-eyebrow {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 36px);
+      letter-spacing: -0.025em;
+      margin: 0 0 14px;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+    .section-lede {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    /* Why grid */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 820px) { .why-grid { grid-template-columns: 1fr; } }
+    .why-card {
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .why-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .why-card .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .why-card .icon svg { width: 18px; height: 18px; }
+    .why-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .why-card p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* Categories */
+    .cat-block { margin-top: 40px; }
+    .cat-block:first-of-type { margin-top: 0; }
+    .cat-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cat-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cat-title h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .cat-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .cat-desc { font-size: 13px; color: var(--text-muted); }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 720px) { .skill-grid { grid-template-columns: 1fr; } }
+    .skill {
+      display: block;
+      padding: 18px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .skill:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    .skill-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .skill-name {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .skill-arrow {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      transition: transform 0.15s;
+    }
+    .skill:hover .skill-arrow {
+      transform: translate(2px, -2px);
+      color: var(--accent);
+    }
+    .skill-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Pipeline */
+    .pipelines {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+    @media (max-width: 820px) { .pipelines { grid-template-columns: 1fr; } }
+    .pipeline {
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+    .pipeline h4 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .pipeline .when {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0 0 14px;
+    }
+    .pipeline pre {
+      margin: 0;
+      background: var(--code-bg);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: var(--text);
+    }
+
+    /* Wire-up */
+    .wireup {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+    @media (max-width: 820px) { .wireup { grid-template-columns: 1fr; } }
+    .wire {
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+    .wire h4 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wire pre {
+      margin: 0;
+      background: var(--code-bg);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      overflow-x: auto;
+      color: var(--text);
+    }
+
+    /* Structure */
+    .structure {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .structure pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: var(--text);
+    }
+    .structure .comment { color: var(--text-muted); }
+
+    /* Footer */
+    footer {
+      padding: 48px 0 64px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    footer .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* tiny utility */
+    code.inline {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#" class="brand">
+      <span class="brand-mark">✦</span>
+      <span>Agent Skills</span>
+    </a>
+    <div class="nav-links">
+      <a href="#skills">Skills</a>
+      <a href="#pipelines">Pipelines</a>
+      <a href="#wire-up">Wire it up</a>
+      <a href="https://github.com" class="nav-cta">
+        GitHub
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span> 15 skills · tool-agnostic · MIT</div>
+    <h1>
+      The boring work<br>
+      around the code,<br>
+      <span class="accent">done right.</span>
+    </h1>
+    <p class="lede">
+      A curated library of skills your coding agent can invoke to audit, clean, and
+      ship a codebase safely. Works with Cursor, Claude Code, or any agentic tool
+      that reads <code class="inline">SKILL.md</code> files.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#skills">
+        Browse skills
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn-secondary" href="#wire-up">Wire it up</a>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Why</div>
+      <h2>Most agents write code. Few do the work around it.</h2>
+      <p class="section-lede">
+        Scanning for leaked secrets, bumping CVEs, opening PRs against the right
+        branch, cutting SemVer tags, rolling back on a bad release — that's where
+        a senior engineer earns their keep. Encode it once, here.
+      </p>
+    </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Hard rules, every time</h3>
+        <p>Every skill ships with a "never break" rules block. No reset to main, no force-push, no auto-merge on a rollback PR. The agent inherits the discipline.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>One interactive prompt</h3>
+        <p>Every skill is autonomous except <code class="inline">ship-ready</code>, which asks once before opening the PR. Everything else just runs.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <h3>Tool-agnostic</h3>
+        <p>Each skill is a single <code class="inline">SKILL.md</code> with frontmatter. Drop it into <code class="inline">.cursor/skills/</code>, <code class="inline">.claude/skills/</code>, or wherever your agent looks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">The library</div>
+      <h2>15 skills, four categories, one orchestrator.</h2>
+      <p class="section-lede">
+        Each card links to the underlying <code class="inline">SKILL.md</code>. Read one
+        end-to-end and you'll see exactly what your agent will do.
+      </p>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-title">
+          <h3>Audits</h3>
+          <span class="cat-badge">catch it before ship</span>
+        </div>
+        <span class="cat-desc">3 leaf skills + 1 orchestrator</span>
+      </div>
+      <div class="skill-grid">
+        <a class="skill" href="skills/secret-scan/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">secret-scan</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Sweep the repo for leaked API keys, tokens, and credentials. Auto-extracts hits into env-var lookups.</p>
+        </a>
+        <a class="skill" href="skills/dependency-audit/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">dependency-audit</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">pip-audit + npm audit. Auto-bumps CRITICAL/HIGH CVEs; verifies the lockfile still resolves.</p>
+        </a>
+        <a class="skill" href="skills/security-audit/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">security-audit</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">SQL injection, CORS, schema validation, cookies, file uploads, eval/exec, path traversal, SSRF, XSS.</p>
+        </a>
+        <a class="skill" href="skills/audit-all/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">audit-all <span style="color: var(--accent); font-size: 11px; margin-left: 6px;">orchestrator</span></span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Runs the three above in the right order, with hard-stop gates between steps.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-title">
+          <h3>Hygiene</h3>
+          <span class="cat-badge">keep it healthy</span>
+        </div>
+        <span class="cat-desc">3 leaf skills + 1 orchestrator</span>
+      </div>
+      <div class="skill-grid">
+        <a class="skill" href="skills/dead-code-sweep/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">dead-code-sweep</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">ruff + eslint + vulture + ts-prune. Auto-removes unused imports/vars; flags unreferenced files for review.</p>
+        </a>
+        <a class="skill" href="skills/lint-and-typecheck-fix/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">lint-and-typecheck-fix</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">ruff --fix, mypy, eslint --fix, tsc --noEmit. Auto-fixes what tools can; categorizes the rest.</p>
+        </a>
+        <a class="skill" href="skills/file-size-enforcer/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">file-size-enforcer</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Enforces a 700-line cap. Auto-splits 701-1000 line files; writes a proposed-split TODO for anything bigger.</p>
+        </a>
+        <a class="skill" href="skills/hygiene-all/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">hygiene-all <span style="color: var(--accent); font-size: 11px; margin-left: 6px;">orchestrator</span></span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Runs the three above. Dead code first (so file-size measurements are accurate), then lint, then split.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-title">
+          <h3>Git &amp; Ship</h3>
+          <span class="cat-badge">land changes safely</span>
+        </div>
+        <span class="cat-desc">4 skills</span>
+      </div>
+      <div class="skill-grid">
+        <a class="skill" href="skills/commit-chat-to-branch/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">commit-chat-to-branch</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Smallest skill in the system. Takes the chat's edits, branches from staging, commits — then stops.</p>
+        </a>
+        <a class="skill" href="skills/review-and-ship-to-staging/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">review-and-ship-to-staging</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Critical code review of every edited file, then branch → commit → PR → merge against staging.</p>
+        </a>
+        <a class="skill" href="skills/promote-staging-to-main/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">promote-staging-to-main</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Open a PR from staging → main and merge as a true merge commit. Pure release event, no code changes.</p>
+        </a>
+        <a class="skill" href="skills/rollback-release/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">rollback-release</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Roll back main to a previous tag via git revert on a PR (never git reset). Stops for human approval.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-title">
+          <h3>Releases</h3>
+          <span class="cat-badge">tag, notes, publish</span>
+        </div>
+        <span class="cat-desc">2 skills</span>
+      </div>
+      <div class="skill-grid">
+        <a class="skill" href="skills/release-tag/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">release-tag</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Decides the next SemVer from conventional commits, creates an annotated tag, appends to release-notes.txt.</p>
+        </a>
+        <a class="skill" href="skills/release-notes-gen/SKILL.md">
+          <div class="skill-row">
+            <span class="skill-name">release-notes-gen</span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">Renders a grouped Markdown changelog between two refs, publishes it as a GitHub Release.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-title">
+          <h3>Top-level</h3>
+          <span class="cat-badge">the whole pipeline, one command</span>
+        </div>
+        <span class="cat-desc">1 orchestrator</span>
+      </div>
+      <div class="skill-grid">
+        <a class="skill" href="skills/ship-ready/SKILL.md" style="grid-column: 1 / -1;">
+          <div class="skill-row">
+            <span class="skill-name">ship-ready <span style="color: var(--accent); font-size: 11px; margin-left: 6px;">orchestrator</span></span>
+            <svg class="skill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </div>
+          <p class="skill-desc">audit-all → hygiene-all → (asks once) → review-and-ship-to-staging. The single interactive prompt in the system.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pipelines">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Workflows</div>
+      <h2>Pre-baked pipelines for the four moments that matter.</h2>
+      <p class="section-lede">
+        Daily, pre-ship, release, emergency. Pick the one that matches your situation
+        and your agent runs the rest.
+      </p>
+    </div>
+    <div class="pipelines">
+      <div class="pipeline">
+        <h4>Daily small fix</h4>
+        <p class="when">A typo, a styling tweak, a one-line bug fix.</p>
+<pre>review-and-ship-to-staging</pre>
+      </div>
+      <div class="pipeline">
+        <h4>Pre-ship anything sensitive</h4>
+        <p class="when">Auth, billing, admin, schema changes.</p>
+<pre>ship-ready
+ ├─ audit-all
+ │   ├─ secret-scan
+ │   ├─ dependency-audit
+ │   └─ security-audit
+ ├─ hygiene-all
+ │   ├─ dead-code-sweep
+ │   ├─ lint-and-typecheck-fix
+ │   └─ file-size-enforcer
+ ├─ (asks: ship? yes/no)
+ └─ review-and-ship-to-staging</pre>
+      </div>
+      <div class="pipeline">
+        <h4>Release</h4>
+        <p class="when">Staging is stable; cut a production release.</p>
+<pre>promote-staging-to-main
+   ↓
+release-tag
+   ↓
+release-notes-gen</pre>
+      </div>
+      <div class="pipeline">
+        <h4>Emergency</h4>
+        <p class="when">Prod is unhappy; back it out without rewriting history.</p>
+<pre>rollback-release v&lt;prev-tag&gt;</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="wire-up">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Install</div>
+      <h2>Wire it into your agent of choice.</h2>
+      <p class="section-lede">
+        The <code class="inline">skills/</code> folder at the root is tool-neutral.
+        Symlink it, copy it, or point your agent at it directly.
+      </p>
+    </div>
+    <div class="wireup">
+      <div class="wire">
+        <h4>Cursor</h4>
+<pre>mkdir -p .cursor
+ln -s ../skills .cursor/skills</pre>
+      </div>
+      <div class="wire">
+        <h4>Claude Code</h4>
+<pre>mkdir -p .claude
+ln -s ../skills .claude/skills</pre>
+      </div>
+      <div class="wire">
+        <h4>Anything else</h4>
+<pre># Copy or symlink the skills/
+# folder into wherever your
+# tool discovers SKILL.md files.</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="structure">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Anatomy</div>
+      <h2>One skill, one file. No DSL, no runtime.</h2>
+      <p class="section-lede">
+        Every skill is a single Markdown file with a frontmatter header. Your agent
+        reads it the same way a new engineer would: top to bottom.
+      </p>
+    </div>
+    <div class="structure">
+<pre>skills/
+├── audit-all/
+│   └── SKILL.md          <span class="comment"># orchestrator</span>
+├── secret-scan/
+│   └── SKILL.md
+├── dependency-audit/
+│   └── SKILL.md
+├── security-audit/
+│   └── SKILL.md
+├── dead-code-sweep/
+│   └── SKILL.md
+├── lint-and-typecheck-fix/
+│   └── SKILL.md
+├── file-size-enforcer/
+│   └── SKILL.md
+├── hygiene-all/
+│   └── SKILL.md          <span class="comment"># orchestrator</span>
+├── commit-chat-to-branch/
+│   └── SKILL.md
+├── review-and-ship-to-staging/
+│   └── SKILL.md
+├── promote-staging-to-main/
+│   └── SKILL.md
+├── rollback-release/
+│   └── SKILL.md
+├── release-tag/
+│   └── SKILL.md
+├── release-notes-gen/
+│   └── SKILL.md
+└── ship-ready/
+    └── SKILL.md          <span class="comment"># top-level orchestrator</span></pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>MIT licensed · use them, fork them, improve them, ship them.</div>
+    <div>
+      <a href="README.md">README</a>
+      &nbsp;·&nbsp;
+      <a href="skills/">All skills</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

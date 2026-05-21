@@ -147,8 +147,8 @@ CallMcpTool user-github create_pull_request {
          ## After merging\n
          - The `release-tag` skill is OK to re-run; it will compute the next
            patch bump on top of the revert.\n
-         - Run `staging-smoke-test` once the rollback PR is merged and the
-           production deploy has cycled.\n
+         - Verify production health once the rollback PR is merged and
+           the production deploy has cycled.\n
          - Do NOT delete the original tags. They stay as historical record."
 }
 ```
@@ -174,7 +174,7 @@ Print the PR URL and the next-step recommendations:
 
 1. Review the PR.
 2. Merge via merge commit (preserves the revert history).
-3. Run `staging-smoke-test` against production.
+3. Verify production is healthy.
 4. If satisfied, optionally run `release-tag` to label the rollback
    (e.g. as `v0.4.0+rollback.1` — but only with explicit user
    request; the `release-tag` skill's normal bump rules won't pick
@@ -227,5 +227,5 @@ Auto-merged:                 no (intentional — human approval required)
 Next steps (manual):
   1. Review the PR above.
   2. Merge with a merge commit (NOT squash — preserves the revert history).
-  3. Run `staging-smoke-test` against production.
+  3. Verify production health.
 ```

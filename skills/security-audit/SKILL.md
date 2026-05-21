@@ -12,29 +12,34 @@ description: >-
 
 # Security Audit
 
-The non-auth security pass. Auth-specific findings (IDOR, admin gating,
-JWT correctness) live in `auth-flow-audit` — this skill never duplicates
-those checks. Secret leaks live in `secret-scan`. This one covers
-everything else.
+The non-secret, non-dependency security pass. Secret leaks live in
+`secret-scan`; CVE bumps live in `dependency-audit`. This skill covers
+SQL injection, CORS, missing schema validation, cookie attributes,
+file-upload safety, dangerous Python builtins, path traversal, SSRF,
+and unsanitized frontend HTML.
 
-## Stack-Specific Context
+## Stack Assumptions
 
-- FastAPI app entry: `[backend/api_server.py](backend/api_server.py)`.
-  CORS is configured via `ALLOWED_ORIGINS` env var + `CORSMiddleware`.
-- Routers: `[backend/routers/](backend/routers/)`. Every endpoint that
-  accepts a body must declare a Pydantic schema from
-  `[backend/schemas/](backend/schemas/)`.
-- Database access: SQLAlchemy via `[backend/db/database.py](backend/db/database.py)`.
-  Raw SQL goes through `db.execute(text("..."))` — every such call must
-  use bound parameters, never f-string interpolation.
-- File uploads: `[backend/routers/documents.py](backend/routers/documents.py)`
-  is the primary surface. Anywhere else that accepts an `UploadFile`
-  must be on the audit list too.
+This skill ships with defaults tuned for a Python (FastAPI / SQLAlchemy)
++ TypeScript (Next.js / React) monorepo with backend code under
+`backend/` and frontend under `frontend/`. Adapt the `rg` paths in
+each sweep to your repo's layout — the patterns themselves apply to
+any stack.
+
+Common conventions the skill checks against:
+
+- FastAPI: CORS via `CORSMiddleware`, request bodies via Pydantic
+  schemas.
+- SQLAlchemy: raw SQL through `db.execute(text("..."))` — every such
+  call must use bound parameters, never f-string interpolation.
+- File uploads: any endpoint accepting an `UploadFile` is on the audit
+  list.
 
 ## When to use this skill
 
 - Any time a new endpoint, schema, or DB query was added.
-- As the fourth step of `audit-all` (after auth-flow-audit).
+- As the third step of `audit-all` (after `secret-scan` and
+  `dependency-audit`).
 - Before promoting `staging` → `main` on any release touching the API
   surface.
 
